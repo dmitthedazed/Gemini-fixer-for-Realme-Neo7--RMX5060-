@@ -7,7 +7,7 @@ GPT_SERVICE="com.openai.chatgpt/com.openai.feature.assistant.impl.AssistantVoice
 GOOGLE_SERVICE="com.google.android.googlequicksearchbox/com.google.android.voiceinteraction.GsaVoiceInteractionService"
 
 ui_print "*******************************"
-ui_print "  Gemini fix — Action "
+ui_print "  Gemini fix —> Action "
 ui_print "*******************************"
 
 # Check if ChatGPT is installed
