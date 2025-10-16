@@ -1,0 +1,34 @@
+name: Build & Release Magisk Module
+
+on:
+  push:
+    tags:
+      - "v*"    # запускается при пуше любого тега вроде v1.0, v2.0
+
+permissions:
+  contents: write   # нужно для создания релиза
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up build environment
+        run: |
+          mkdir -p build
+          echo "Preparing Magisk module build folder"
+
+      - name: Build Magisk Module ZIP
+        run: |
+          zip -r "build/Gemini_fixer_for_Realme_Neo7_RMX5060-${GITHUB_REF_NAME}.zip" . -x "*.git*" ".github/*"
+
+      - name: Upload artifact to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/*.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
