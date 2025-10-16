@@ -3,9 +3,9 @@ name: Auto Build & Release Magisk Module
 on:
   push:
     branches:
-      - main  # или укажи другую ветку, если хочешь
+      - main
     paths-ignore:
-      - '.github/**'  # чтобы не триггерилось при изменениях workflow
+      - '.github/**'
 
 permissions:
   contents: write
@@ -21,52 +21,41 @@ jobs:
       - name: Read and increment version
         id: bump
         run: |
-          # Извлекаем текущую версию из module.prop
+          # Extract current version
           CURRENT_VERSION=$(grep '^version=' module.prop | cut -d'=' -f2)
           if [ -z "$CURRENT_VERSION" ]; then
             CURRENT_VERSION="1.0"
           fi
 
-          # Отделяем major и minor
-          MAJOR=$(echo $CURRENT_VERSION | cut -d'.' -f1)
-          MINOR=$(echo $CURRENT_VERSION | cut -d'.' -f2)
-          if [ -z "$MINOR" ]; then
-            MINOR=0
-          fi
-
-          # Увеличиваем MINOR
-          NEW_MINOR=$((MINOR + 1))
-          NEW_VERSION="${MAJOR}.${NEW_MINOR}"
+          # Increment by +0.1 (handle floating numbers)
+          NEW_VERSION=$(awk "BEGIN {printf \"%.1f\", $CURRENT_VERSION + 0.1}")
           NEW_VERSIONCODE=$(date +%s)
 
-          echo "CURRENT_VERSION=$CURRENT_VERSION"
-          echo "NEW_VERSION=$NEW_VERSION"
-          echo "NEW_VERSIONCODE=$NEW_VERSIONCODE"
-
-          echo "version=$NEW_VERSION" >> $GITHUB_ENV
-          echo "versionCode=$NEW_VERSIONCODE" >> $GITHUB_ENV
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "NEW_VERSIONCODE=$NEW_VERSIONCODE" >> $GITHUB_ENV
+          echo "✅ Bumped version from $CURRENT_VERSION to $NEW_VERSION"
 
       - name: Update module.prop
         run: |
           sed -i '/^version=/d' module.prop
           sed -i '/^versionCode=/d' module.prop
-          echo "version=${version}" >> module.prop
-          echo "versionCode=${versionCode}" >> module.prop
+          echo "version=${NEW_VERSION}" >> module.prop
+          echo "versionCode=${NEW_VERSIONCODE}" >> module.prop
 
       - name: Update update.json
         run: |
           cat > update.json <<EOF
           {
-            "version": "${version}",
-            "versionCode": "${versionCode}",
-            "zipUrl": "https://github.com/${{ github.repository }}/releases/latest/download/Gemini_fixer_for_Realme_Neo7_RMX5060-v${version}.zip",
-            "changelog": "Automatic build ${version} — voice assistant restoration fix."
+            "version": "${NEW_VERSION}",
+            "versionCode": "${NEW_VERSIONCODE}",
+            "zipUrl": "https://github.com/${{ github.repository }}/releases/latest/download/Gemini_fixer_for_Realme_Neo7_RMX5060-v${NEW_VERSION}.zip",
+            "changelog": "Automatic build ${NEW_VERSION} — voice assistant restoration fix."
           }
           EOF
 
       - name: Build Magisk Module ZIP
         run: |
-          ZIP_NAME="Gemini_fixer_for_Realme_Neo7_RMX5060-v${version}.zip"
+          ZIP_NAME="Gemini_fixer_for_Realme_Neo7_RMX5060-v${NEW_VERSION}.zip"
           zip -r "$ZIP_NAME" . -x "*.git*" ".github/*"
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
 
@@ -75,20 +64,20 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add module.prop update.json
-          git commit -m "Auto bump version to ${version}"
+          git commit -m "Auto bump version to ${NEW_VERSION}"
           git push
 
       - name: Create Git tag
         run: |
-          git tag "v${version}"
-          git push origin "v${version}"
+          git tag "v${NEW_VERSION}"
+          git push origin "v${NEW_VERSION}"
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ env.version }}
-          name: "Gemini Fixer v${{ env.version }}"
-          body: "Auto build of Gemini Fixer module v${{ env.version}}."
+          tag_name: v${{ env.NEW_VERSION }}
+          name: "Gemini Fixer v${{ env.NEW_VERSION }}"
+          body: "Auto build of Gemini Fixer module v${{ env.NEW_VERSION }}."
           files: ${{ env.ZIP_NAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
