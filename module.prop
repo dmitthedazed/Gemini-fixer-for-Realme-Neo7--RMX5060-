@@ -1,6 +1,7 @@
 id=gemini_fixer_module
-name=Gemini fixer for RMX5060
+name=Gemini fixer for Realme Neo7 (RMX5060)
 version=1.0
 versionCode=1
 author=dmitthedazed
-description=Fixes the Gemini after reboot. Works by temporary switching voice assistant to ChatGPT app (Could not find better fix). Addition for ShortX script. 
+description=Fixes the Gemini after reboot. Works by temporarily switching voice assistant to ChatGPT app. (Status auto-updates after boot)
+updateJson=https://raw.githubusercontent.com/dmitthedazed/Gemini-fixer-for-Realme-Neo7--RMX5060-/main/update.json
