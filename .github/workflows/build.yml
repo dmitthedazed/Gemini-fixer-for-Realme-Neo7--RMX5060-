@@ -41,6 +41,8 @@ jobs:
           sed -i '/^versionCode=/d' module.prop
           echo "version=${NEW_VERSION}" >> module.prop
           echo "versionCode=${NEW_VERSIONCODE}" >> module.prop
+          # Also update updateJson URL to ensure it uses correct repo
+          sed -i 's|updateJson=.*|updateJson=https://raw.githubusercontent.com/${{ github.repository }}/main/update.json|' module.prop
 
       - name: Update update.json
         run: |
@@ -64,8 +66,13 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add module.prop update.json
-          git commit -m "Auto bump version to ${NEW_VERSION}"
-          git push
+          # Check if there are changes to commit
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Auto bump version to ${NEW_VERSION}"
+            git push origin main || echo "Push failed, skipping"
+          fi
 
       - name: Create Git tag
         run: |
